@@ -3,25 +3,24 @@ import requests
 import json
 import sqlite3
 import pandas as pd
-from secret import api_key
+
+import secrets
+import CONSTANTS
 
 
-def recive_data():
-    # print('Data request')
-    # latitude = 59.9139
-    # longitude = 10.7522
+def data_request():
     # current_time = arrow.now().floor('hour')
     # response_cloud = requests.get(
     #     'https://api.stormglass.io/v2/weather/point',
     # params={
-    #     'lat': latitude,
-    #     'lng': longitude,
+    #     'lat': CONSTANTS.OSLO_LAT,
+    #     'lng': CONSTANTS.OSLO_LON,
     #     'start': current_time.to('UTC').timestamp(),  # Convert to UTC timestamp
     #     'end': current_time.to('UTC').timestamp(),  # Convert to UTC timestamp
     #     'params': ','.join(['cloudCover']),
     # },
     # headers={
-    #     'Authorization': api_key
+    #     'Authorization': secrets.API_KEY
     # }
     # )
 
@@ -30,16 +29,16 @@ def recive_data():
     # response_astronomy = requests.get(
     #     'https://api.stormglass.io/v2/astronomy/point',
     # params={
-    #     'lat': latitude,
-    #     'lng': longitude,
+    #     'lat': CONSTANTS.OSLO_LAT,
+    #     'lng': CONSTANTS.OSLO_LON,
     #     'start': start.to('UTC').timestamp(),  # Convert to UTC timestamp
     #     'end': end.to('UTC').timestamp(),  # Convert to UTC timestamp
     # },
     # headers={
-    #     'Authorization': api_key
+    #     'Authorization': secrets.API_KEY
     # }
     # )
-    # Do something with response data.
+    
     # json_data_cloud = response_cloud.json()
     current_time = arrow.now().floor('hour')
     json_data_cloud = {
@@ -136,14 +135,11 @@ def recive_data():
         "start": "2023-02-17 23:00"
     }
 }
-    #print(json.dumps(json_data_astronomy, indent=4))
-    data_sunset = json_data_astronomy['data'][0]['sunset'] # "2023-02-18T16:15:19+00:00"
-    data_sunrise = json_data_astronomy['data'][0]['sunrise'] # "2023-02-18T06:49:30+00:00"
+    
+    data_sunset = json_data_astronomy['data'][0]['sunset'] # Output: "2023-02-18T16:15:19+00:00"
+    data_sunrise = json_data_astronomy['data'][0]['sunrise'] # Output: "2023-02-18T06:49:30+00:00"
 
     db_create(current_time, data_cloud, data_sunset, data_sunrise)
-    # Create connection and cursor
-
-
 
 
 def db_create(current_time, data_cloud, data_sunset, data_sunrise):
@@ -162,8 +158,8 @@ def db_create(current_time, data_cloud, data_sunset, data_sunrise):
     else:
         # Table does not exist, create it
         c.execute('''CREATE TABLE mytable
-                     (current_hour text UNIQUE, data_cloud real, data_sunset text, data_sunrise text)''')
-        print('Table created')
+                     (current_hour text UNIQUE, data_cloud int, data_sunset text, data_sunrise text)''')
+        #print('Table created')
     try:
         c.execute("INSERT INTO mytable VALUES (?, ?, ?, ?)", (current_time_str, data_cloud, data_sunset, data_sunrise))
     except sqlite3.IntegrityError:
@@ -172,32 +168,51 @@ def db_create(current_time, data_cloud, data_sunset, data_sunrise):
     conn.close()
 
 
-# main code
-conn = sqlite3.connect('mydatabase.db')
-c = conn.cursor()
-#c.execute('''DROP TABLE mytable''')
-current_hour_new = arrow.now().floor('hour')
+def recive_data_api():
+    conn = sqlite3.connect('mydatabase.db')
+    c = conn.cursor()
+    #c.execute('''DROP TABLE mytable''')
+    current_hour_new = arrow.now().floor('hour')
 
-# Check if the mytable table and the same value exists
-c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='mytable'")
-table_exists = c.fetchone() is not None
-
-# Check if the current_hour_new value is present in the current_hour column of the mytable table
-if table_exists:
-    c.execute("SELECT current_hour FROM mytable")
-    current_hours = [row[0] for row in c.fetchall()]
-    if current_hour_new in current_hours:
-        print('data exist')
+    # Check if the mytable table and the same value exists
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='mytable'")
+    table_exists = c.fetchone() is not None
+    # Check if the current_hour_new value is present in the current_hour column of the mytable table
+    if table_exists:
+        c.execute("SELECT current_hour FROM mytable")
+        current_hours = [row[0] for row in c.fetchall()]
+        if current_hour_new in current_hours:
+            print('data exist')
+        else:
+            data_request()
+            print('done')
     else:
-        recive_data()
-        print('done')
-else:
-    recive_data()
+        data_request()
 
-# Read a table into a DataFrame
-df = pd.read_sql_query("SELECT * FROM mytable", conn)
-#  Print the firstrows of the DataFrame
-print(df.head())
-# Close the cursor and the database connection
-c.close()
-conn.close()
+    # Close the cursor and the database connection
+    c.close()
+    conn.close()
+
+def recive_data_from_table():
+    conn = sqlite3.connect('mydatabase.db')
+    c = conn.cursor()
+    #current_time = arrow.now().floor('hour')
+    #current_time_str = current_time.format('YYYY-MM-DD HH:mm:ss')
+    current_time_str = '2023-02-18 00:13:00' #'2023-02-18 00:00:00'
+    c.execute("SELECT * FROM mytable")
+
+    # fetch all the results and print each row
+    rows = c.fetchall()
+    for data in rows:
+    #     print(row)
+    # c.execute("SELECT * FROM mytable WHERE current_hour = ?", (current_time_str,))
+    # data = c.fetchone()
+    # print(data)
+        data_cloud = data[1]
+        data_sunset = data[2]
+        data_sunrise = data[3]
+
+    conn.close()
+    
+    data_api = (data_cloud, data_sunset, data_sunrise)
+    return data_api
