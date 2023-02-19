@@ -15,6 +15,10 @@ Light zone: The area that receives the most natural light is best suited for act
 To use this project, you will need to install the required Python packages specified in the requirements.txt file. You can do this by running the following command:
 
 ```python
+python3.9 -m venv venv
+
+source venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
@@ -35,6 +39,7 @@ Replace your-api-key-goes-here with the API key you obtained from the Storm Glas
 
 ## Launch
 
+Run the program using the command:
 ```python
 streamlit run <*the path to the directory where it is located main.py*>
 ```
