@@ -1,28 +1,23 @@
-import streamlit as st
-
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-import datetime
 import pytz
+import streamlit as st
 
 from calculations import calculations
-from receive_current_data_api import recive_data_from_table, recive_data_api
-
-import CONSTANTS
-
-
+from receive_current_data_api import retrieve_data_from_table, recive_data_api
 
 # Define a function to create a heatmap based on the room dimensions
 def create_heatmap(width, length, source_position, source_x, source_y):
     recive_data_api()
-    data_api = recive_data_from_table()
-    light_flux = calculations(source_position, data_api)
+    data_api = retrieve_data_from_table()
+    light_lux = calculations(source_position, data_api)
     data = np.zeros((length, width))
     for i in range(length):
          for j in range(width):
             dist = np.sqrt((i - source_y) ** 2 + (j - source_x) ** 2)
-            illumination = light_flux / (width*length)
+            illumination = light_lux / (width*length)
             data[i][j] = np.exp(-dist/(illumination * 10000))
 
     fig, ax = plt.subplots()
@@ -31,7 +26,6 @@ def create_heatmap(width, length, source_position, source_x, source_y):
     image1 = fig_to_image(fig)
     
     # Create heatmap with three zones
-    
     colors = ['#f5c6cb', '#fce5cd', '#d4edda']  # Define colors for each zone
     cmap = ListedColormap(colors)
     bounds = [0.15, 0.66, 1]  # Define boundaries for each zone
@@ -54,31 +48,31 @@ def fig_to_image(fig):
 
 # Launching the program
 def main():
-    st.title("The Solar Illumination Data Visualizer")
+    st.title("Visualization of data on the solar illumination of the room")
 
     # Get the dimensions of the fiber from the user
     room_width = st.number_input("Room width (meters):", value=10, min_value=1)
     room_length = st.number_input("Room lenght (meters):", value=10, min_value=1)
 
     # Get the position of the window from the user
-    st.write("Select the location of the light source on the edge of the room (meters):")
+    st.write("Select the location of the window:")
 
-    source_position = st.selectbox("Source position:", ["North", "West", "South", "East"])
+    source_position = st.selectbox("Side of the world:", ["North", "West", "South", "East"])
     if source_position == "North":
-        source_x = st.number_input("X coordinate:", value=0, min_value=0, max_value=room_width)
+        source_x = st.number_input("Distance from the wall (meters):", value=0, min_value=0, max_value=room_width)
         source_x *= 10
         source_y = 0
     elif source_position == "East":
         source_x = room_width*10
-        source_y = st.number_input("Y coordinate:", value=0, min_value=0, max_value=room_length)
+        source_y = st.number_input("Distance from the wall (meters):", value=0, min_value=0, max_value=room_length)
         source_y *= 10
     elif source_position == "South":
-        source_x = st.number_input("X coordinate:", value=0, min_value=0, max_value=room_width)
+        source_x = st.number_input("Distance from the wall (meters):", value=0, min_value=0, max_value=room_width)
         source_x *= 10
         source_y = room_length*10
     elif source_position == "West":
         source_x = 0
-        source_y = st.number_input("Y coordinate:", value=0, min_value=0, max_value=room_length)
+        source_y = st.number_input("Distance from the wall (meters):", value=0, min_value=0, max_value=room_length)
         source_y *= 10
 
     # Create the heatmap based on the room dimensions
@@ -90,12 +84,18 @@ def main():
 
     # Create the sidebar with main information
     st.sidebar.title("Information")
-    data_for_sidebar = recive_data_from_table()
+    data_for_sidebar = retrieve_data_from_table()
     # Add the current time
     current_time = datetime.datetime.now(pytz.UTC) 
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
     st.sidebar.subheader("Current Time")
     st.sidebar.write(formatted_time)
+
+    # Add the cloud_cover
+    cloud_cover_level = data_for_sidebar[0]
+    
+    st.sidebar.subheader("Cloud cover")
+    st.sidebar.write(cloud_cover_level)
 
     # Add the sunset time
     sunset_time = data_for_sidebar[1]

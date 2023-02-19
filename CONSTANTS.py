@@ -5,8 +5,6 @@ OSLO_LON = 10.7522
 # Meters above sea level (Oslo)
 ELEVATION = 23 
 
-
-
 # Direction of each window (in degrees)
 NORTH_DIR = 0
 SOUTH_DIR = 180
@@ -24,10 +22,10 @@ K = 0.15
 # its height above the ground are preset.
 
 # The height of the room above ground level and floor
-ROOM_HEIGHT = 3 # meters (distance from the ground)
 WINDOW_WIDTH = 1.5  # meters
 WINDOW_HEIGHT = 1.0  # meters
 WINDOW_AREA = WINDOW_WIDTH * WINDOW_HEIGHT
 WINDOW_DISTANCE = 1.5  # meters (distance from the floor)
 WINDOW_TRANSMITTANCE = 0.5 # the total transmittance of the window
 WINDOW_CENTER = WINDOW_DISTANCE + WINDOW_HEIGHT / 2
+MAX_VISABILITY_THROUGHT_WINDOW = 0.3
