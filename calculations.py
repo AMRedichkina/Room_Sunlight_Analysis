@@ -40,31 +40,32 @@ def calculate_intensity(sun_altitude, cloud_cover, direction, sun_azimuth, data_
         of the hemisphere is not needed for the calculation). 
 
         """
-        #now = datetime.datetime.now(pytz.UTC)
-        now_time = '2023-02-18T00:15:19+00:00'
-        now = datetime.datetime.strptime(now_time, '%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=pytz.timezone('Europe/Oslo')).astimezone(pytz.UTC)
-        sunset_time = datetime.datetime.strptime(data_sunset, '%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=pytz.timezone('Europe/Oslo')).astimezone(pytz.UTC)
-        sunrise_time = datetime.datetime.strptime(data_sunrise, '%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=pytz.timezone('Europe/Oslo')).astimezone(pytz.UTC)
-        # Check if it's before sunrise or after sunset
-        if now < sunrise_time or now > sunset_time:
+        current_time = datetime.datetime.now()
+        next_hour = (current_time + datetime.timedelta(hours=-1)).strftime('%Y-%m-%d %H:00:00')
+        
+        #Check if it's before sunrise or after sunset
+        if next_hour < data_sunrise or next_hour > data_sunset:
             I = 0
             return I
-        
+
         d = CONSTANTS.ROOM_HEIGHT/ math.sin(math.radians(sun_altitude))
 
         angle = abs(direction - sun_azimuth)
         if angle > 180:
             angle = 360 - angle
-        sky_area = 2 * math.pi * (1 - math.cos(math.radians(angle)))
-        
-        V = CONSTANTS.WINDOW_AREA / sky_area
+        cos_theta = abs(math.cos(math.radians(sun_altitude)) * math.cos(math.radians(direction - sun_azimuth)))
+        sky_area = 2 * math.pi * (1 - math.cos(math.radians(90 - math.degrees(math.asin(cos_theta)))))
 
-        I = CONSTANTS.I0 * math.exp(- CONSTANTS.K * d * cloud_cover) * V
-        print(I)
+        angle_factor = (180 - angle) / 180
+        V = CONSTANTS.WINDOW_AREA / sky_area
+        I = CONSTANTS.I0 * math.exp(- CONSTANTS.K * d * cloud_cover) * V * angle_factor
+        
         return I
      
 
-def calculations(source_position, data_api):
+def calculations(source_position, data_api): 
+    # data_api = (data_cloud, data_sunset, data_sunrise)
+    # (8.18, '2023-02-19T16:17:55+00:00', '2023-02-19T06:46:45+00:00')
 
     if source_position == "North":
         direction = CONSTANTS.NORTH_DIR
@@ -84,7 +85,7 @@ def calculations(source_position, data_api):
     oslo.lat = str(CONSTANTS.OSLO_LAT)  
     oslo.lon = str(CONSTANTS.OSLO_LON)
     oslo.elevation = CONSTANTS.ELEVATION  # in meters
-    dt = datetime.datetime.strptime(data_api[1], '%Y-%m-%dT%H:%M:%S%z')
+    dt = datetime.datetime.strptime(data_api[1], '%Y-%m-%d %H:%M:%S')
     oslo_date = '{}/{}/{} {}:{}:{}'.format(dt.day, dt.month, dt.year, dt.hour, dt.minute, dt.second)
 
     oslo.date = oslo_date
