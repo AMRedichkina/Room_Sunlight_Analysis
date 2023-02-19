@@ -48,7 +48,7 @@ def calculate_intensity(sun_altitude, cloud_cover, direction, sun_azimuth, data_
             I = 0
             return I
 
-        d = CONSTANTS.ROOM_HEIGHT/ math.sin(math.radians(sun_altitude))
+        d = CONSTANTS.WINDOW_HEIGHT/ math.sin(math.radians(sun_altitude))
 
         angle = abs(direction - sun_azimuth)
         if angle > 180:
@@ -58,6 +58,10 @@ def calculate_intensity(sun_altitude, cloud_cover, direction, sun_azimuth, data_
 
         angle_factor = (180 - angle) / 180
         V = CONSTANTS.WINDOW_AREA / sky_area
+        max_visibility_throught_window = 0.3
+
+        if V > max_visibility_throught_window:
+            V = max_visibility_throught_window
         I = CONSTANTS.I0 * math.exp(- CONSTANTS.K * d * cloud_cover) * V * angle_factor
         
         return I

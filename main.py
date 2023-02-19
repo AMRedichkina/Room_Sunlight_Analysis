@@ -1,6 +1,8 @@
 import streamlit as st
+
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import datetime
 import pytz
 
@@ -9,15 +11,7 @@ from receive_current_data_api import recive_data_from_table, recive_data_api
 
 import CONSTANTS
 
-# Define a function to create a custom colormap with three zones
-def create_custom_cmap():
-    # Define the colors for the three zones
-    colors = ['#1f77b4', '#ff7f0e', '#d62728']
-    # Define the thresholds for the three zones
-    thresholds = [0.65, 0.75, 0.90, 1]
-    # Create a colormap that maps each zone to a specific color
-    cmap = plt.matplotlib.colors.LinearSegmentedColormap.from_list('custom', list(zip(thresholds, colors)))
-    return cmap
+
 
 # Define a function to create a heatmap based on the room dimensions
 def create_heatmap(width, length, source_position, source_x, source_y):
@@ -28,25 +22,27 @@ def create_heatmap(width, length, source_position, source_x, source_y):
     for i in range(length):
          for j in range(width):
             dist = np.sqrt((i - source_y) ** 2 + (j - source_x) ** 2)
-            illumination = light_flux / (width*length) * 10000
-            data[i][j] = np.exp(-dist/illumination)
-    
-    # # Create the first heatmap plot with a gradient fill
-    # fig, axs = plt.subplots(1, 2, figsize=(12, 5))
-    # axs[0].imshow(data, cmap='inferno')
-    # axs[0].set_title('Gradient Fill')
-
-    # # Create the second heatmap plot with three zones
-    # bins = np.digitize(data, np.linspace(0, 1, 4))
-    # cmap = create_custom_cmap()
-    # axs[1].imshow(bins, cmap=cmap)
-    # axs[1].set_title('Three Zones')
+            illumination = light_flux / (width*length)
+            data[i][j] = np.exp(-dist/(illumination * 10000))
 
     fig, ax = plt.subplots()
     im = ax.imshow(data, cmap='inferno', vmin=0, vmax=1)  # set vmin and vmax here
     fig.colorbar(im)
-    image = fig_to_image(fig)
-    return image
+    image1 = fig_to_image(fig)
+    
+    # Create heatmap with three zones
+    
+    colors = ['#f5c6cb', '#fce5cd', '#d4edda']  # Define colors for each zone
+    cmap = ListedColormap(colors)
+    bounds = [0.15, 0.66, 1]  # Define boundaries for each zone
+    norm = plt.Normalize(bounds[0], bounds[-1])
+    fig, ax = plt.subplots()
+    im = ax.imshow(data, cmap=cmap, norm=norm)
+    cbar = ax.figure.colorbar(im, ax=ax, ticks=bounds)
+    cbar.ax.set_yticklabels(['Dark', 'Medium', 'Light'])
+    image2 = fig_to_image(fig)
+
+    return image1, image2
 
 # Define a function to convert a matplotlib figure to an image
 def fig_to_image(fig):
@@ -89,7 +85,8 @@ def main():
     heatmap = create_heatmap((room_width*10), (room_length*10), source_position, source_x, source_y)
 
     # Display the heatmap in the screen
-    st.image(heatmap, use_column_width=True)
+    st.image(heatmap[0], use_column_width=True)
+    st.image(heatmap[1], use_column_width=True)
 
     # Create the sidebar with main information
     st.sidebar.title("Information")
@@ -117,9 +114,28 @@ def main():
     st.sidebar.write(intens)
 
     # Add the recommendation
-    recommendation = "Recommendation" 
-    st.subheader("Recommendation")
-    st.write(recommendation)    
+    recommendation = {
+        'Dark zone': 'Since this area receives the least amount of natural light, it is best used as a space for activities that do not require bright light, such as a home theater or a cozy reading nook.',
+        'Medium-light zone': 'This area receives moderate amounts of natural light and is perfect for a workspace, an art studio, or a craft room, where natural light can help with color accuracy and reduce eye strain.',
+        'Light zone': 'The area that receives the most natural light is best suited for activities that require bright light, such as a dining area, a playroom, or a home gym.'
+    }
+
+    # Define the window treatments and plants recommendations
+    window_treatments = 'In all zones, it is important to take advantage of natural light by using window treatments that allow for light to filter through while also providing privacy and controlling glare.'
+    plants = 'Additionally, incorporating plants can help improve air quality and bring a touch of nature into the space, especially in areas that receive ample sunlight.'
+
+    # Define the styling for the recommendation
+    header_style = '<h3 style="text-align:center;font-weight:bold">Recommendation</h3>'
+    zone_style = '<h4 style="font-weight:bold">{}</h4>'
+    text_style = '<p style="text-align:justify">{}</p>'
+
+    # Display the recommendation with the styling
+    st.markdown(header_style, unsafe_allow_html=True)
+    for zone, text in recommendation.items():
+        st.markdown(zone_style.format(zone), unsafe_allow_html=True)
+        st.markdown(text_style.format(text), unsafe_allow_html=True)
+    st.markdown(text_style.format(window_treatments), unsafe_allow_html=True)
+    st.markdown(text_style.format(plants), unsafe_allow_html=True)
 
 # Run the program
 if __name__ == "__main__":
