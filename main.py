@@ -6,7 +6,8 @@ import pytz
 import streamlit as st
 
 from calculations import calculations
-from retrieve_current_data_api import retrieve_data_from_table, recive_data_api
+from retrieve_data import retrieve_data_from_table, recive_data_api
+
 
 # Define a function to create a heatmap based on the room dimensions
 def create_heatmap(width, length, source_position, source_x, source_y):
@@ -15,7 +16,7 @@ def create_heatmap(width, length, source_position, source_x, source_y):
     light_lux = calculations(source_position, data_api)
     data = np.zeros((length, width))
     for i in range(length):
-         for j in range(width):
+        for j in range(width):
             dist = np.sqrt((i - source_y) ** 2 + (j - source_x) ** 2)
             illumination = light_lux / (width*length)
             data[i][j] = np.exp(-dist/(illumination * 10000))
@@ -24,7 +25,7 @@ def create_heatmap(width, length, source_position, source_x, source_y):
     im = ax.imshow(data, cmap='inferno', vmin=0, vmax=1)  # set vmin and vmax here
     fig.colorbar(im)
     image1 = fig_to_image(fig)
-    
+
     # Create heatmap with three zones
     colors = ['#f5c6cb', '#fce5cd', '#d4edda']  # Define colors for each zone
     cmap = ListedColormap(colors)
@@ -38,6 +39,7 @@ def create_heatmap(width, length, source_position, source_x, source_y):
 
     return image1, image2
 
+
 # Define a function to convert a matplotlib figure to an image
 def fig_to_image(fig):
     from io import BytesIO
@@ -45,6 +47,7 @@ def fig_to_image(fig):
     fig.savefig(buf, format='png')
     buf.seek(0)
     return buf
+
 
 # Launching the program
 def main():
@@ -86,20 +89,20 @@ def main():
     st.sidebar.title("Information")
     data_for_sidebar = retrieve_data_from_table()
     # Add the current time
-    current_time = datetime.datetime.now(pytz.UTC) 
+    current_time = datetime.datetime.now(pytz.UTC)
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
     st.sidebar.subheader("Current Time")
     st.sidebar.write(formatted_time)
 
     # Add the cloud_cover
     cloud_cover_level = data_for_sidebar[0]
-    
+
     st.sidebar.subheader("Cloud cover")
     st.sidebar.write(cloud_cover_level)
 
     # Add the sunset time
     sunset_time = data_for_sidebar[1]
-    
+
     st.sidebar.subheader("Sunset Time")
     st.sidebar.write(sunset_time)
 
@@ -109,7 +112,7 @@ def main():
     st.sidebar.write(dawn_time)
 
     # Add the intensity
-    intens = calculations(source_position, data_for_sidebar)  
+    intens = calculations(source_position, data_for_sidebar)
     st.sidebar.subheader("The total light intensity entering the room through the window")
     st.sidebar.write(intens)
 
@@ -125,7 +128,7 @@ def main():
     plants = 'Additionally, incorporating plants can help improve air quality and bring a touch of nature into the space, especially in areas that receive ample sunlight.'
 
     # Define the styling for the recommendation
-    header_style = '<h3 style="text-align:center;font-weight:bold">Recommendation</h3>'
+    header_style = '<h3 style="text-align:center;font-weight:bold">Recommendations</h3>'
     zone_style = '<h4 style="font-weight:bold">{}</h4>'
     text_style = '<p style="text-align:justify">{}</p>'
 
@@ -136,6 +139,7 @@ def main():
         st.markdown(text_style.format(text), unsafe_allow_html=True)
     st.markdown(text_style.format(window_treatments), unsafe_allow_html=True)
     st.markdown(text_style.format(plants), unsafe_allow_html=True)
+
 
 # Run the program
 if __name__ == "__main__":
