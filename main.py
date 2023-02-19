@@ -6,7 +6,7 @@ import pytz
 import streamlit as st
 
 from calculations import calculations
-from receive_current_data_api import retrieve_data_from_table, recive_data_api
+from retrieve_current_data_api import retrieve_data_from_table, recive_data_api
 
 # Define a function to create a heatmap based on the room dimensions
 def create_heatmap(width, length, source_position, source_x, source_y):
