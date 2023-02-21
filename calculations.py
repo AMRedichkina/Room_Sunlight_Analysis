@@ -1,6 +1,7 @@
 import math
 import ephem
 import datetime
+from decimal import Decimal
 
 import constants
 
@@ -31,28 +32,47 @@ def calculate_intensity(sun_altitude, cloud_cover, direction, sun_azimuth, data_
         I = 0
         return I
 
-    # Calculate the distance from the window to the sun
-    d = constants.WINDOW_HEIGHT / math.sin(math.radians(sun_altitude))
+    # Convert input values to Decimal as well
+    sun_altitude = Decimal(str(sun_altitude))
+    sun_azimuth = Decimal(str(sun_azimuth))
+    direction = Decimal(str(direction))
+    cloud_cover = Decimal(str(cloud_cover))
 
-    # Calculate the solid angle of the sky visible from the window
-    cos_theta = abs(math.cos(math.radians(sun_altitude)) * math.cos(math.radians(direction - sun_azimuth)))
-    sky_area = 2 * math.pi * (1 - math.cos(math.radians(90 - math.degrees(math.asin(cos_theta)))))
+    # Calculate the distance from the window to the sun
+    d = constants.EARTH_RADIUS * Decimal(math.tan(math.radians(float(sun_altitude))))
+
+    # Calculate the solid angle of the sky visible from the window (sky_area)
+
+    # Convert sun_altitude and direction-sun_azimuth to float in radians
+    sun_altitude = float(sun_altitude)
+    sun_azimuth = float(sun_azimuth)
+    direction = float(direction)
+    sun_altitude_rad = math.radians(sun_altitude)
+    sun_azimuth_rad = math.radians(sun_azimuth)
+    direction_rad = math.radians(direction)
+
+    # Calculate the absolute value of the cosine of the angle between the sun and the direction
+    cosine_altitude_rad = Decimal(math.cos(sun_altitude_rad))
+    cosine_direction_azimuth_rad = Decimal(math.cos(direction_rad - sun_azimuth_rad))
+    cos_theta = abs(cosine_altitude_rad * cosine_direction_azimuth_rad)
+    r = Decimal('1') - Decimal(math.cos(math.radians(90 - math.degrees(math.asin(float(cos_theta))))))
+    sky_area = Decimal('2') * Decimal('3.14159265358979323846') * r
+
     # Calculate the visibility factor, which depends on the area of the window and
     # the solid angle of the sky visible from the window
     V = constants.WINDOW_AREA / sky_area
-    if V > constants.MAX_VISABILITY_THROUGHT_WINDOW:
-        V = constants.MAX_VISABILITY_THROUGHT_WINDOW
 
     # Calculate the angle between the direction the window is facing and the position of the sun
     angle = abs(direction - sun_azimuth)
     if angle > 180:
         angle = 360 - angle
-    angle_factor = (180 - angle) / 180
+    angle_factor = (Decimal('180') - Decimal(angle)) / Decimal('180')
 
     # Calculate the intensity of the sunlight shining through the window
-    I = constants.I0 * math.exp(- constants.K * d * cloud_cover) * V * angle_factor
+    exp_term = Decimal(constants.K / 100000) * Decimal(d) * (cloud_cover)
 
-    return I
+    intensity = constants.I0 * Decimal(math.exp(-exp_term)) * V * angle_factor
+    return float(intensity)
 
 
 def calculations(source_position, data_api):

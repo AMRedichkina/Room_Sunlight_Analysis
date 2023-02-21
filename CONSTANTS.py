@@ -1,3 +1,4 @@
+from decimal import Decimal
 #
 OSLO_LAT = 59.9139
 OSLO_LON = 10.7522
@@ -21,11 +22,10 @@ K = 0.15
 # the dimensions of the window and
 # its height above the ground are preset.
 
-# The height of the room above ground level and floor
-WINDOW_WIDTH = 1.5  # meters
-WINDOW_HEIGHT = 1.0  # meters
-WINDOW_AREA = WINDOW_WIDTH * WINDOW_HEIGHT
-WINDOW_DISTANCE = 1.5  # meters (distance from the floor)
-WINDOW_TRANSMITTANCE = 0.5  # the total transmittance of the window
-WINDOW_CENTER = WINDOW_DISTANCE + WINDOW_HEIGHT / 2
-MAX_VISABILITY_THROUGHT_WINDOW = 0.3
+
+EARTH_RADIUS = Decimal('6.371e6')  # in meters
+WINDOW_HEIGHT = Decimal('1.5')  # in meters
+WINDOW_WIDTH = Decimal('1')  # in meters
+WINDOW_AREA = WINDOW_HEIGHT * WINDOW_WIDTH  # in square meters
+I0 = Decimal('1361')  # Solar constant in W/m^2
+K = Decimal('0.15')  # Attenuation coefficient of the atmosphere

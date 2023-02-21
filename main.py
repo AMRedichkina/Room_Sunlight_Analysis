@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -18,8 +19,8 @@ def create_heatmap(width, length, source_position, source_x, source_y):
     for i in range(length):
         for j in range(width):
             dist = np.sqrt((i - source_y) ** 2 + (j - source_x) ** 2)
-            illumination = light_lux / (width*length)
-            data[i][j] = np.exp(-dist/(illumination * 10000))
+            illumination = light_lux / (width * length)
+            data[i][j] = np.exp(- dist /(illumination * 10000))
 
     fig, ax = plt.subplots()
     im = ax.imshow(data, cmap='inferno', vmin=0, vmax=1)  # set vmin and vmax here
