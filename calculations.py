@@ -56,6 +56,7 @@ def calculate_intensity(sun_altitude, cloud_cover, direction, sun_azimuth, data_
     cosine_direction_azimuth_rad = Decimal(math.cos(direction_rad - sun_azimuth_rad))
     cos_theta = abs(cosine_altitude_rad * cosine_direction_azimuth_rad)
     r = Decimal('1') - Decimal(math.cos(math.radians(90 - math.degrees(math.asin(float(cos_theta))))))
+    
     sky_area = Decimal('2') * Decimal('3.14159265358979323846') * r
 
     # Calculate the visibility factor, which depends on the area of the window and
@@ -63,15 +64,15 @@ def calculate_intensity(sun_altitude, cloud_cover, direction, sun_azimuth, data_
     V = constants.WINDOW_AREA / sky_area
 
     # Calculate the angle between the direction the window is facing and the position of the sun
-    angle = abs(direction - sun_azimuth)
-    if angle > 180:
-        angle = 360 - angle
-    angle_factor = (Decimal('180') - Decimal(angle)) / Decimal('180')
+    # angle = abs(direction - sun_azimuth)
+    # if angle > 180:
+    #     angle = 360 - angle
+    # angle_factor = (Decimal('180') - Decimal(angle)) / Decimal('180')
 
     # Calculate the intensity of the sunlight shining through the window
     exp_term = Decimal(constants.K / 100000) * Decimal(d) * (cloud_cover)
 
-    intensity = constants.I0 * Decimal(math.exp(-exp_term)) * V * angle_factor
+    intensity = constants.I0 * Decimal(math.exp(-exp_term)) * V
     return float(intensity)
 
 
